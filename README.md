@@ -68,7 +68,17 @@ The virtual environment can be installed using conda
 conda env create -f py37_environment.yml
 ```
 ### Download data and pretrained model
-Dataset can be downloaded from this [page](https://zenodo.org/record/3870859)
+Dataset can be downloaded from this [page](https://zenodo.org/record/3870859). Your data folder might look like this
+```text
+|__SELD2020/
+    |__foa_dev/
+    |__foa_eval/
+    |__mic_dev/
+    |__mic_eval/
+    |__metadata_dev/
+    |__metadata_eval/
+    |__metadata_eval_info.csv
+```
 
 Pretrained model `Cnn14_mAP=0.431.pth` for SED can be downloaded from this [page](https://zenodo.org/record/3987831)
 

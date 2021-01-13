@@ -39,8 +39,8 @@ class SedDoaDatabase:
         :param gt_meta_root_dir: Directory that contains groundtruth meta data.
         The data are orgamized in the following format:
             |__gt_meta_dir/
-                |__/metadata_dev/
-                |__/metadata_eval/
+                |__metadata_dev/
+                |__metadata_eval/
                 |__metadata_eval_info.csv
         """
         self.feature_root_dir = feature_root_dir
