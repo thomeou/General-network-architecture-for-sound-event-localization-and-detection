@@ -139,6 +139,6 @@ cython_debug/
 
 # generated data files
 outputs/
-pretrained_models/
+# pretrained_models/
 .vscode/
 lightning_logs/

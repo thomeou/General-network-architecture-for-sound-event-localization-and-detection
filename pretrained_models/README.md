@@ -1,0 +1,1 @@
+Please download a pretrained model name "Cnn14_mAP=0.431.pth" from https://zenodo.org/record/3987831 and put in this folder.
