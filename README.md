@@ -20,7 +20,7 @@ Another big challenge of SELD is the lack of joint datasets.
 We have much larger datasets for single-channel sound classification such as [AudioSet](https://research.google.com/audioset/) or [FSD50K](https://annotator.freesound.org/fsd/release/FSD50K/). 
 However, since the multi-channel datasets are restricted to some particular microphone array geometry, 
 we do not have a big general datasets for DOA estimation. 
-The current largest joint dataset for SELD task is simulated and limited to 13.3 hours. 
+The current largest publicly available joint dataset for SELD task is simulated and limited to 13.3 hours. 
 
 ## Proposed method
 We proposed a general and flexible network architecture for SELD as shown in the figures below. 
@@ -47,22 +47,49 @@ An example of network architectures of each module are shown below.
 ![alt text](figures/crnn_block.png)
 
 ## Dataset
-
+We use the [TAU-NIGENS Spatial Sound Events 2020](https://zenodo.org/record/3870859) for our experiment. 
+For more information, please refer to the [DCASE2020 SELD challenge](http://dcase.community/challenge2020/task-sound-event-localization-and-detection).
 
 ## Experimental Results
+We trained different SED and DOA estimation models as shown below:
+![alt text](figures/model_descriptions.png)
+One of the SED model is initialized using pretrained weights of a model trained on AudioSet (single-channel) to demonstrate 
+that the proposed method can also work when SED models are trained using single-channel datasets.
+We mix and match different SED and DOA models and trained an alignment network to match SED and DOA estimation output. 
+The experimental results are shown below:
+![alt text](figures/experimental_results.png)
+The experimental results are obtained without fine-tuned the SED and DOA estimation module.  
 
 ## How to use the provided code
 The python code was implemented using Python 3.7
 ### Requirements
-
+The virtual environment can be installed using conda
+```commandline
+conda env create -f py37_environment.yml
+```
 ### Download data and pretrained model
+Dataset can be downloaded from this [page](https://zenodo.org/record/3870859)
+
+Pretrained model `Cnn14_mAP=0.431.pth` for SED can be downloaded from this [page](https://zenodo.org/record/3987831)
 
 ### Running Scripts
-
+To be updated
 ## Citation
-
-## License
+If you use this code in your research, please cite our paper
+```text
+@article{nguyen2020general,
+  title={A General Network Architecture for Sound Event Localization and Detection Using Transfer Learning and Recurrent Neural Network},
+  author={Nguyen, Thi Ngoc Tho and Nguyen, Ngoc Khanh and Phan, Huy and Pham, Lam and Ooi, Kenneth and Jones, Douglas L and Gan, Woon-Seng},
+  journal={arXiv preprint arXiv:2011.07859},
+  year={2020}
+}
+```
 
 ## External links
+1. http://dcase.community/challenge2020/task-sound-event-localization-and-detection
+2. https://zenodo.org/record/3870859
+3. https://github.com/qiuqiangkong/audioset_tagging_cnn
+4. https://zenodo.org/record/3987831
+
 
 
