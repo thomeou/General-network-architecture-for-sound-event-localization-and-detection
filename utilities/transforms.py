@@ -222,17 +222,18 @@ class CompositeCutout(DataAugSpectrogramNp):
         self.random_cutout_hole = RandomCutoutHoleNp(always_apply=True)
 
     def apply(self, x: np.ndarray):
-        choice = np.random.randint(0, 2, 1)[0]
+        choice = np.random.randint(0, 3, 1)[0]
         if choice == 0:
             return self.random_cutout(x)
         elif choice == 1:
             return self.spec_augment(x)
+        elif choice == 2:
+            return self.random_cutout_hole(x)
 
 
 class RandomFlipLeftRightNp(DataAugSpectrogramNp):
     """
     This data augmentation randomly flip spectrogram left and right.
-    TODO also flip labels
     """
     def __init__(self, always_apply: bool = False, p: float = 0.5):
         super().__init__(always_apply, p)
@@ -440,35 +441,4 @@ class RandomShiftUpDownNp(DataAugSpectrogramNp):
         else:
             new_spec = np.pad(new_spec, ((0, 0), (0, 0), (0, shift_len)), mode=self.mode)[:, :, shift_len:]
         return new_spec
-
-
-class TTA:
-    """
-    This class collect a list of random augmentation for test data
-    """
-    def __init__(self, repeat: int = 1):
-        self.repeat = repeat
-        self.transform_list = [
-            AdditiveGaussianNoiseNp(always_apply=True),
-            MultiplicativeGaussianNoiseNp(always_apply=True),
-            RandomCutoutHoleNp(always_apply=True, n_max_holes=12, max_h_size=6, max_w_size=6),
-            RandomRotateNp(always_apply=True),
-        ]
-        self.n_tta = self.repeat * len(self.transform_list) + 1
-
-    def __call__(self, x: np.ndarray):
-        return self.apply(x)
-
-    def apply(self, x: np.ndarray) -> np.ndarray:
-        """
-        :param x < np.ndarray (n_channels, n_time_steps, n_features)
-        :return: tta:  <np.ndarray(n_ttas, n_channels, n_timesteps, n_features)
-        """
-        tta = [x]
-        for _ in np.arange(self.repeat):
-            for transform in self.transform_list:
-                tta.append(transform(x))
-        tta = np.stack(tta, axis=0)
-        return tta
-
 

@@ -49,7 +49,7 @@ class SedDoaChunkDataset(Dataset):
         # Mixup mainly for SED
         if self.is_mixup:
             a1 = np.random.beta(0.5, 0.5)
-            if np.random.rand() < 0.8 and np.abs(a1 - 0.5) > 0.2:  # ~ p = 0.5
+            if np.random.rand() < 0.8 and np.abs(a1 - 0.5) > 0.2:
                 random_index = np.random.randint(0, self.n_samples, 1)[0]
                 random_chunk_idx = self.chunk_idxes[random_index]
                 X_1 = self.features[:, random_chunk_idx: random_chunk_idx + self.chunk_len, :]
@@ -63,6 +63,7 @@ class SedDoaChunkDataset(Dataset):
             X = self.transform(X)
 
         return X, sed_labels, doa_labels, filename
+
 
 class SeldChunkDataset(Dataset):
     """

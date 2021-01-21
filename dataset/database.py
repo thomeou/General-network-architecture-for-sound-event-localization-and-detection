@@ -4,7 +4,6 @@ audio file into segments and tokenize these segments
 Note: 32bit is sufficient for DL models.
 Note on terminology on audio length: frames -> segments -> chunk/clip -> file
 """
-import json
 import logging
 import os
 from typing import List
@@ -17,7 +16,6 @@ import pandas as pd
 class SedDoaDatabase:
     """
     Class to handle different extracted features for SED or DOA separately.
-    TODO: add background class
     """
     def __init__(self,
                  feature_root_dir: str = '/media/tho_nguyen/disk2/new_seld/dcase2020/features/'
@@ -25,7 +23,7 @@ class SedDoaDatabase:
                  gt_meta_root_dir: str = '/media/tho_nguyen/disk1/audio_datasets/dcase2020/task3',
                  audio_format: str = 'foa', n_classes: int = 14, fs: int = 24000, n_fft: int = 1024, hop_len: int = 300,
                  label_rate: float = 10, train_chunk_len_s: float = 4.0, train_chunk_hop_len_s: float = 0.5,
-                 test_chunk_len_s: float = 4.0, test_chunk_hop_len_s: float = 2.0, scaler_type: str = 'scalar'):
+                 test_chunk_len_s: float = 4.0, test_chunk_hop_len_s: float = 2.0, scaler_type: str = 'vector'):
         """
         :param feature_root_dir: Feature directory. can be SED or DOA feature.
         The data are organized in the following format:
@@ -39,8 +37,8 @@ class SedDoaDatabase:
         :param gt_meta_root_dir: Directory that contains groundtruth meta data.
         The data are orgamized in the following format:
             |__gt_meta_dir/
-                |__metadata_dev/
-                |__metadata_eval/
+                |__/metadata_dev/
+                |__/metadata_eval/
                 |__metadata_eval_info.csv
         """
         self.feature_root_dir = feature_root_dir
@@ -66,8 +64,6 @@ class SedDoaDatabase:
         self.n_frames = int(np.floor((self.fs * 60 - (self.n_fft - self.hop_len)) / self.hop_len)) + 2  #+ 2 because of padding
         self.feature_rate = self.fs/self.hop_len  # Frame rate per second
         self.label_upsample_ratio = int(self.feature_rate / self.label_rate)
-
-
         self.mean, self.std = self.load_scaler()
 
         logger = logging.getLogger('lightning')
@@ -77,7 +73,7 @@ class SedDoaDatabase:
         logger.info('test_chunk_len = {}, test_chunk_hop_len = {}'.format(
             self.test_chunk_len, self.test_chunk_hop_len))
 
-    def get_split(self, split: str, split_meta_dir: str = 'meta/original', doa_format: str = 'xyz'):
+    def get_split(self, split: str, split_meta_dir: str = '/meta/original', doa_format: str = 'xyz'):
         """
         Function to load all data of a split into memory, divide long audio clip/file into smaller chunks, and assign
         labels for clips and chunks. List of SED labels:
@@ -111,7 +107,7 @@ class SedDoaDatabase:
             raise NotImplementedError('chunk len is not assigned for split {}'.format(split))
 
         # Load and crop data
-        features, sed_targets, doa_targets, chunk_idxes, filename_list = self.load_chunk_data(
+        features, sed_targets, doa_targets, chunk_idxes, filename_list, test_batch_size = self.load_chunk_data(
             split_filenames=split_filenames, split_feature_dir=split_feature_dir, gt_meta_dir=gt_meta_dir,
             doa_format=doa_format, split=split)
         # pack data
@@ -120,7 +116,8 @@ class SedDoaDatabase:
             'sed_targets': sed_targets,
             'doa_targets': doa_targets,
             'chunk_idxes': chunk_idxes,
-            'filename_list': filename_list
+            'filename_list': filename_list,
+            'test_batch_size': test_batch_size
         }
 
         return db_data
@@ -149,7 +146,7 @@ class SedDoaDatabase:
         return mean, std
 
     def load_chunk_data(self, split_filenames: List, split_feature_dir: str, gt_meta_dir: str,
-                        doa_format: str = 'xyz', split: str ='train'):
+                        doa_format: str = 'xyz', split: str = 'train'):
         """
         Load feature, crop data and assign labels.
         :param split_filenames: List of filename in the split.
@@ -236,9 +233,10 @@ class SedDoaDatabase:
             sed_targets = np.concatenate(sed_targets_list, axis=0)
             doa_targets = np.concatenate(doa_targets_list, axis=0)
             chunk_idxes = np.concatenate(idxes_list, axis=0)
-            return features, sed_targets, doa_targets, chunk_idxes, filename_list
+            test_batch_size = len(idxes)  # to load all chunks of the same file
+            return features, sed_targets, doa_targets, chunk_idxes, filename_list, test_batch_size
         else:
-            return None, None, None, None
+            return None, None, None, None, None
 
 class SeldDatabase():
     """
