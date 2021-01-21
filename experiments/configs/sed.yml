@@ -1,0 +1,43 @@
+# SED config
+name: sed
+feature_root_dir: '/media/tho_nguyen/disk2/new_seld/dcase2020/features/logmel/24000fs_1024nfft_300nhop_128nmels_Falsestd'
+gt_meta_root_dir: '/media/tho_nguyen/disk1/audio_datasets/dcase2020/task3'
+split_meta_dir: '/home/tho_nguyen/Documents/work/seld/dataset/meta/original'
+seed: 2018
+mode: 'crossval'  # 'crossval' | 'eval'
+task: 'sed'  # 'sed'| 'doa' | 'seld'
+data:
+  fs: 24000
+  n_fft: 1024
+  hop_len: 300
+  n_mels: 128
+  audio_format: 'foa'  # 'foa' | 'mic'
+  label_rate: 10  # Label rate per second
+  train_chunk_len_s: 4
+  train_chunk_hop_len_s: 0.5
+  test_chunk_len_s: 4
+  test_chunk_hop_len_s: 4
+  scaler_type: 'vector'
+  n_classes: 14
+  train_fraction: 1
+  val_fraction: 1
+model:
+  encoder:
+    name: 'Cnn8'
+    p_dropout: 0.0
+    pretrained: false
+    unfreeze_epoch: 0
+  decoder:
+    name: 'SedDecoder'
+    freq_pool: 'avg'  # 'avg' | 'max' | 'avg_max'
+    decoder_type: 'gru'
+training:
+  train_batch_size: 32
+  val_batch_size: 16
+  optimizer: 'adam'
+  lr: 1.e-3
+  max_epochs: 50  # epoch counting from [0 to n-1]
+  val_interval: 1
+sed_threshold: 0.3
+
+

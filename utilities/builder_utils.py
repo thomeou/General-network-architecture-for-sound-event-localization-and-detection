@@ -5,12 +5,14 @@ This modules consists code to select different components for
 """
 import logging
 
+import pytorch_lightning as pl
 import torch
 import torch.nn as nn
 
 import models
 from dataset.database import SedDoaDatabase
 from dataset.datamodule import SedDoaDataModule
+from models.sed_models import SedModel
 
 
 def build_database(cfg):
@@ -19,7 +21,7 @@ def build_database(cfg):
     :param cfg: Experiment config
     """
     if cfg.task in ['sed', 'SED', 'doa', 'DOA']:
-        feature_db = SedDoaDatabase(feature_root_dir=cfg.feature_dir, gt_meta_root_dir=cfg.split_meta_dir,
+        feature_db = SedDoaDatabase(feature_root_dir=cfg.feature_root_dir, gt_meta_root_dir=cfg.gt_meta_root_dir,
                                     audio_format=cfg.data.audio_format, n_classes=cfg.data.n_classes, fs=cfg.data.fs,
                                     n_fft=cfg.data.n_fft, hop_len=cfg.data.hop_len, label_rate=cfg.data.label_rate,
                                     train_chunk_len_s=cfg.data.train_chunk_len_s,
@@ -44,7 +46,7 @@ def build_datamodule(cfg, feature_db):
     if cfg.task in ['sed', 'SED', 'doa', 'DOA']:
         datamodule = SedDoaDataModule(feature_db=feature_db, split_meta_dir=cfg.split_meta_dir, mode=cfg.mode,
                                       train_batch_size=cfg.training.train_batch_size,
-                                       val_batch_size=cfg.training.val_batch_size)
+                                      val_batch_size=cfg.training.val_batch_size)
 
     elif cfg.task in ['seld', 'SELD']:
         pass
@@ -54,48 +56,34 @@ def build_datamodule(cfg, feature_db):
     return datamodule
 
 
-
-def build_model(model_name, pretrained_path: str = None, load_type: str = 'partial', cp_key: str = 'model_state_dict',
-                **kwargs) -> nn.Module:
+def build_model(name: str, **kwargs) -> nn.Module:
     """
-    Function to select model and load pretrained weight if available
-    :param model_name: Name of model.
-    :param pretrained_path: Path to pretrained state dict.
-    :param load_type: if 'strict': load everything, if 'partial': load matched state dict
-    :param cp_key: to access the checkpoint:
-        cp_key = 'model_state_dict': for normal pytorch model saved with
-            torch.save(model.state_dict(), PATH)' (not verifed)
-            torch.save({
-                'epoch': epoch,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                'loss': loss,
-                ...
-                }, PATH)
-        cp_key = 'model': to load PANNs model
-        cp_key = 'state_dict': pytorch lightning model.
-    :return: Pytorch nn.Module.
+    Build encoder.
+    :param name: Name of the encoder.
+    :return: encoder model
     """
-    # Load model:
-    model = models.__dict__[model_name](**kwargs)
     logger = logging.getLogger('lightning')
-    logger.info('Finish loading model {}.'.format(model_name))
-
-    # Load pretrained weights
-    if pretrained_path:
-        checkpoint = torch.load(pretrained_path, map_location=lambda storage, loc: storage)
-        try:
-            if load_type == 'strict':
-                model.load_state_dict(checkpoint[cp_key])
-            else:
-                model.load_state_dict(checkpoint[cp_key], strict=False)
-
-            logger.info('Load pretrained weights from checkpoint {}.'.format(pretrained_path))
-        except:
-            logger.info('WARNING: Coud not load pretrained weights from checkpoint {}.'.format(pretrained_path))
-    else:
-        logger.info('No loading pretrained weights.')
+    # Load model:
+    model = models.__dict__[name](**kwargs)
+    logger.info('Finish loading model {}.'.format(name))
 
     return model
 
+
+def build_task(encoder, decoder, cfg, **kwargs) -> pl.LightningModule:
+    """
+    Build task
+    :param encoder:
+    :param decoder:
+    :param cfg:
+    :return: Lightning module
+    """
+    if cfg.task in ['sed', 'Sed', 'SED']:
+        model = SedModel(encoder=encoder, decoder=decoder, encoder_unfreeze_epoch=cfg.model.encoder.unfreeze_epoch,
+                         sed_threshold=cfg.data.sed_threshold, label_rate=cfg.data.label_rate,
+                         optimizer_name=cfg.training.optimizer)
+    else:
+        pass
+
+    return model
 
